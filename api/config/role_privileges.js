@@ -92,6 +92,18 @@ module.exports = {
             description: "Category delete"
         },
         {
+            key: "category_export",
+            name: "Category Export",
+            group: "CATEGORIES",
+            description: "Category Export"
+        },
+        {
+            key: "category_import",
+            name: "Category Import",
+            group: "CATEGORIES",
+            description: "Category Import"
+        },
+       {
             key: "dwelling_view",
             name: "Dwelling View",
             group: "DWELLINGS",
@@ -114,6 +126,18 @@ module.exports = {
             name: "Dwelling Delete",
             group: "DWELLINGS",
             description: "Dwelling delete"
+        },
+        {
+            key: "dwelling_export",
+            name: "Dwelling Export",
+            group: "DWELLINGS",
+            description: "Dwelling Export"
+        },
+        {
+            key: "dwelling_import",
+            name: "Dwelling Import",
+            group: "DWELLINGS",
+            description: "Dwelling Import"
         },
         {
             key: "person_view",
@@ -140,6 +164,18 @@ module.exports = {
             description: "Person delete"
         },
         {
+            key: "person_export",
+            name: "Person Export",
+            group: "PERSONS",
+            description: "Person Export"
+        },
+        {
+            key: "person_import",
+            name: "Person Import",
+            group: "PERSONS",
+            description: "Person Import"
+        },
+        {
             key: "association_view",
             name: "Association View",
             group: "ASSOCIATIONS",
@@ -164,10 +200,52 @@ module.exports = {
             description: "Association delete"
         },
         {
-            key: "category_export",
-            name: "Category Export",
-            group: "CATEGORIES",
-            description: "Category Export"
+            key: "association_export",
+            name: "Association Export",
+            group: "ASSOCIATIONS",
+            description: "Association Export"
+        },
+        {
+            key: "association_import",
+            name: "Association Import",
+            group: "ASSOCIATIONS",
+            description: "Association Import"
+        },
+        {
+            key: "constant_view",
+            name: "Constant View",
+            group: "CONSTANTS",
+            description: "Constant View"
+        },
+        {
+            key: "constant_add",
+            name: "Constant Add",
+            group: "CONSTANTS",
+            description: "Constant Add"
+        },
+        {
+            key: "constant_update",
+            name: "Constant Update",
+            group: "CONSTANTS",
+            description: "Constant Update"
+        },
+        {
+            key: "constant_delete",
+            name: "Constant Delete",
+            group: "CONSTANTS",
+            description: "Constant Delete"
+        },
+        {
+            key: "constant_export",
+            name: "Constant Export",
+            group: "CONSTANTS",
+            description: "Constant Export"
+        },
+        {
+            key: "constant_import",
+            name: "Constant Import",
+            group: "CONSTANTS",
+            description: "Constant Import"
         },
         {
             key: "auditlogs_view",

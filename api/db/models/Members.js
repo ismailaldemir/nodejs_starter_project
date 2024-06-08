@@ -1,11 +1,12 @@
 const mongoose = require("mongoose");
 const Associations = require("./Associations");
 const Persons = require("./Persons");
+const Constants = require("./Constants");
 
 const schema = mongoose.Schema({
     association_id: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: Associations },
-    memtype_id: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: Membertypes },//üye tür id TODO:üyelik türleri endpointi oluşturulacak
-    persons_id: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: Persons },
+    memtype_id: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: Constants },//üye tür id 
+    person_id: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: Persons },
     member_number: { type: String, required: true},
     dec_date: { type: Date, required: true},//decission date karar tarihi
     dec_number: { type: String, required: true},//decission number karar numarası

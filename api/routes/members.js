@@ -1,14 +1,12 @@
 const express = require("express");
 const router = express.Router();
 
-const Roles = require("../db/models/Roles");
-const RolePrivileges = require("../db/models/RolePrivileges");
+const Associations = require("../db/models/Associations");
 const Response = require("../lib/Response");
 const CustomError = require("../lib/Error");
 const Enum = require("../config/Enum");
-const role_privileges = require("../config/role_privileges");
 const config = require("../config");
-const UserRoles = require("../db/models/UserRoles");
+const Members = require("../db/models/Members");
 const auth = require("../lib/auth")();
 const i18n = new (require("../lib/i18n"))(config.DEFAULT_LANG);
 const AuditLogs = require("../lib/AuditLogs");
