@@ -20,3 +20,6 @@ router.get('/', function(req, res, next) {
 */
 
 module.exports = router;
+
+/*TODO:Yapılan ekleme ve düzenlemeler Githuba issuelar eklenerek gönderilecek. 10.1 videosu sonunda 
+vscode üzerinden gönderim işlemleri anlatılıyor*/
