@@ -1,93 +1,99 @@
-const express = require("express");
-const router = express.Router();
-
-const Associations = require("../db/models/Associations");
+var express = require("express");
+var router = express.Router();
+const Members = require("../db/models/Members");
 const Response = require("../lib/Response");
 const CustomError = require("../lib/Error");
 const Enum = require("../config/Enum");
-const config = require("../config");
-const Members = require("../db/models/Members");
-const auth = require("../lib/auth")();
-const i18n = new (require("../lib/i18n"))(config.DEFAULT_LANG);
 const AuditLogs = require("../lib/AuditLogs");
 const logger = require("../lib/logger/LoggerClass");
+const config = require('../config');
+const auth = require("../lib/auth")();
+const i18n = new (require("../lib/i18n"))(config.DEFAULT_LANG);
+const emitter = require("../lib/Emitter");
+const excelExport = new (require("../lib/Export"))();
+const fs = require("fs");
+const multer = require("multer");
+const path = require('path');
+const Import = new (require("../lib/Import"))();
+
+let multerStorage = multer.diskStorage({
+    destination: (req, file, next) => {
+        next(null, config.FILE_UPLOAD_PATH)
+    },
+    filename: (req, file, next) => {
+        next(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname));
+    }
+})
+
+const upload = multer({ storage: multerStorage }).single("pb_file");
 
 router.all("*", auth.authenticate(), (req, res, next) => {
   next();
 });
 
-router.get("/", auth.checkRoles("role_view"), async (req, res) => {
+/* GET members listing. */
+router.get("/", auth.checkRoles("member_view"), async (req, res, next) => {
   try {
-    let roles = await Roles.find({}).lean();
-
-    for (let i = 0; i < roles.length; i++) {
-      let permissions = await RolePrivileges.find({ role_id: roles[i]._id });
-      roles[i].permissions = permissions;
-    }
-
-    res.json(Response.successResponse(roles));
+    let members = await Members.find({});
+    res.json(Response.successResponse(members));
   } catch (error) {
-    let errorResponse = Response.errorResponse({ error });
-    res.status(errorResponse.code).json(errorResponse);
+    let errorResponse = Response.errorResponse(error);
+    res.status(errorResponse.code).json(Response.errorResponse(error));
   }
 });
 
-router.post("/add", auth.checkRoles("role_add"), async (req, res) => {
+router.post("/add", auth.checkRoles("member_add"), async (req, res) => {
   let body = req.body;
 
   try {
-    if (!body.role_name)
+    if (!body.member_number)
       throw new CustomError(
         Enum.HTTP_CODES.BAD_REQUEST,
         i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),
         i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, [
-          "role_name"
+          "member_number"
         ])
       );
-    if (
-      !body.permissions ||
-      !Array.isArray(body.permissions) ||
-      body.permissions.length == 0
-    )
+      if (!body.association_id)
       throw new CustomError(
         Enum.HTTP_CODES.BAD_REQUEST,
         i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),
-        i18n.translate("COMMON.FIELD_MUST_BE_TYPE", req.user.language, [
-          "permissions",
-          "Array"
+        i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, [
+          "association_id"
         ])
       );
 
-    let role = new Roles({
-      role_name: body.role_name,
+    let member = new Members({
+      association_id: body.association_id,
+      memtype_id: body.memtype_id,
+      person_id: body.person_id,
+      dec_date: body.dec_date,
+      dec_number: body.dec_number,
+      member_number: body.member_number,
+      entry_date: body.entry_date,
+      term_date: body.term_date,
       is_active: true,
       created_by: req.user.id
     });
 
-    await role.save();
+    await member.save();
 
     //auditlogs kaydı ekleniyor
-    AuditLogs.info(req.user.email, "Roles", "Add", role);
-    logger.info(req.user.email, "Roles", "Add", role);
+    AuditLogs.info(req.user.email, "Members", "Add", member);
+    logger.info(req.user.email, "Members", "Add", member);
     
-    for (let i = 0; i < body.permissions.length; i++) {
-      let priv = new RolePrivileges({
-        role_id: role._id,
-        permission: body.permissions[i],
-        created_by: req.user.id
-      });
-
-      await priv.save();
-    }
+    //yapılan işleme ait bildirim mesajı görüntüleniyor
+    emitter.getEmitter("notifications").emit("messages", { message: member.member_number + " is added" });
 
     res.json(Response.successResponse({ success: true }));
   } catch (error) {
+    logger.error(null, "Members", "Add", error);
     let errorResponse = Response.errorResponse(error);
     res.status(errorResponse.code).json(errorResponse);
   }
 });
 
-router.post("/update", /*auth.checkRoles("role_update"), */async (req, res) => {
+router.post("/update", auth.checkRoles("member_update"), async (req, res) => {
   let body = req.body;
 
   try {
@@ -96,72 +102,26 @@ router.post("/update", /*auth.checkRoles("role_update"), */async (req, res) => {
         Enum.HTTP_CODES.BAD_REQUEST,
         i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),
         i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, [
-          "_id"
+          "id"
         ])
       );
 
-    //kullanıcının kendinde yetkisi bulunan rolün yetkilerini yükseltmesi engelleniyor
-  let userRole = await UserRoles.findOne({
-      user_id: req.user.id,
-      role_id: body._id
-    });
-    
-
-  /*  if (userRole) {
-      throw new CustomError(
-        Enum.HTTP_CODES.FORBIDDEN,
-        i18n.translate("COMMON.NEED_PERMISSIONS", req.user.language),
-        i18n.translate("COMMON.NEED_PERMISSIONS", req.user.language)
-      );
-    }*/
-
     let updates = {};
 
-    if (body.role_name) updates.role_name = body.role_name;
+    if (body.association_id) updates.association_id = body.association_id;
+    if (body.memtype_id) updates.memtype_id = body.memtype_id;
+    if (body.person_id) updates.person_id = body.person_id;
+    if (body.dec_date) updates.dec_date = body.dec_date;
+    if (body.dec_number) updates.dec_number = body.dec_number;
+    if (body.member_number) updates.member_number = body.member_number;
+    if (body.entry_date) updates.entry_date = body.entry_date;
+    if (body.term_date) updates.term_date = body.term_date;
     if (typeof body.is_active === "boolean") updates.is_active = body.is_active;
 
-    /*gönderilen istekteki yetkilerle veritabanındaki yetkileri karşılaştır ve kaydet*/
-
-    if (
-      body.permissions &&
-      Array.isArray(body.permissions) &&
-      body.permissions.length > 0
-    ) {
-      let permissions = await RolePrivileges.find({ role_id: body._id });
-
-      // body.permissions => ["category_view", "user_add"]
-      // permissions => [{role_id: "abc", permission: "user_add", _id: "bcd"}];
-
-      let removedPermissions = permissions.filter(
-        x => !body.permissions.includes(x.permission)
-      );
-      let newPermissions = body.permissions.filter(
-        x => !permissions.map(p => p.permission).includes(x)
-      );
-
-      if (removedPermissions.length > 0) {
-        await RolePrivileges.deleteMany({
-          _id: { $in: removedPermissions.map(x => x._id) }
-        });
-      }
-
-      if (newPermissions.length > 0) {
-        for (let i = 0; i < newPermissions.length; i++) {
-          let priv = new RolePrivileges({
-            role_id: body._id,
-            permission: newPermissions[i],
-            created_by: req.user.id
-          });
-
-          await priv.save();
-        }
-      }
-    }
-
-    await Roles.updateOne({ _id: body._id }, updates);
+    await Members.updateOne({ _id: body._id }, updates);
 
     //auditlogs kaydı ekleniyor
-    AuditLogs.info(null, "UserRoles", "Update", {
+    AuditLogs.info(null, "Members", "Update", {
       _id: body._id,
       ...updates
     });
@@ -173,7 +133,7 @@ router.post("/update", /*auth.checkRoles("role_update"), */async (req, res) => {
   }
 });
 
-router.post("/delete", auth.checkRoles("role_delete"), async (req, res) => {
+router.post("/delete", auth.checkRoles("member_delete"), async (req, res) => {
   let body = req.body;
   try {
     if (!body._id)
@@ -181,23 +141,71 @@ router.post("/delete", auth.checkRoles("role_delete"), async (req, res) => {
         Enum.HTTP_CODES.BAD_REQUEST,
         i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),
         i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, [
-          "_id"
+          "id"
         ])
       );
-    //   let permissions = await RolePrivileges.find({ role_id: body._id });
 
-    //await RolePrivileges.deleteMany(permissions.permission);
-    await RolePrivileges.deleteMany({ role_id: body._id });
-
-    await Roles.deleteMany({ _id: body._id });
+    await Members.deleteOne({ _id: body._id });
 
     //auditlogs kaydı ekleniyor
-    AuditLogs.info(null, "UserRoles", "Delete", { _id: body._id });
+    AuditLogs.info(null, "Members", "Delete", { _id: body._id });
 
     res.json(Response.successResponse({ success: true }));
   } catch (error) {
     let errorResponse = Response.errorResponse(error);
     res.status(errorResponse.code).json(errorResponse);
+  }
+});
+
+router.post("/export", auth.checkRoles("member_export"), async (req, res) => {
+  try {
+      let members = await Members.find({});
+
+
+      let excel = excelExport.toExcel(
+          ["MEMBER NUMBER", "IS ACTIVE?", "USER_ID", "CREATED AT", "UPDATED AT"],
+          ["member_number", "is_active", "created_by", "created_at", "updated_at"],
+          members
+      )
+
+      let filePath = __dirname + "/../tmp/members_excel_" + Date.now() + ".xlsx";
+
+      fs.writeFileSync(filePath, excel, "UTF-8");
+
+      res.download(filePath);
+
+      // fs.unlinkSync(filePath);
+
+  } catch (err) {
+      let errorResponse = Response.errorResponse(err);
+      res.status(errorResponse.code).json(Response.errorResponse(err));
+  }
+});
+
+router.post("/import", auth.checkRoles("member_add"), upload, async (req, res) => {
+  try {
+
+      let file = req.file;
+      let body = req.body;
+
+      let rows = Import.fromExcel(file.path);
+
+      for (let i = 1; i < rows.length; i++) {
+          let [member_number, is_active, user, created_at, updated_at] = rows[i];
+          if (member_number) {
+              await Members.create({
+                  member_number,
+                  is_active,
+                  created_by: req.user._id
+              });
+          }
+      }
+
+      res.status(Enum.HTTP_CODES.CREATED).json(Response.successResponse(req.body, Enum.HTTP_CODES.CREATED));
+
+  } catch (err) {
+      let errorResponse = Response.errorResponse(err);
+      res.status(errorResponse.code).json(Response.errorResponse(err));
   }
 });
 

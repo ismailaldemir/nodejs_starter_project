@@ -248,6 +248,41 @@ module.exports = {
             description: "Constant Import"
         },
         {
+            key: "member_view",
+            name: "Member View",
+            group: "MEMBERS",
+            description: "Member View"
+        },
+        {
+            key: "member_add",
+            name: "Member Add",
+            group: "MEMBERS",
+            description: "Member Add"
+        },
+        {
+            key: "member_update",
+            name: "Member Update",
+            group: "MEMBERS",
+            description: "Member Update"
+        },
+        {
+            key: "member_delete",
+            name: "Member Delete",
+            group: "MEMBERS",
+            description: "Member Delete"
+        },
+        {
+            key: "member_export",
+            name: "Member Export",
+            group: "MEMBERS",
+            description: "Member Export"
+        },
+        {
+            key: "member_import",
+            name: "Member Import",
+            group: "MEMBERS",
+            description: "Member Import"
+        },{
             key: "auditlogs_view",
             name: "AuditLogs View",
             group: "AUDITLOGS",
