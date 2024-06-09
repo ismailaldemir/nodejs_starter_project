@@ -145,7 +145,7 @@ router.post("/export", auth.checkRoles("constant_export"), async (req, res) => {
 
 
       let excel = excelExport.toExcel(
-          ["NAME", "IS ACTIVE?", "USER_ID", "CREATED AT", "UPDATED AT"],
+          ["TITLE", "IS ACTIVE?", "USER_ID", "CREATED AT", "UPDATED AT"],
           ["title", "is_active", "created_by", "created_at", "updated_at"],
           constants
       )
