@@ -62,6 +62,38 @@ router.post("/add", auth.checkRoles("member_add"), async (req, res) => {
           "association_id"
         ])
       );
+      if (!body.person_id)
+      throw new CustomError(
+        Enum.HTTP_CODES.BAD_REQUEST,
+        i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),
+        i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, [
+          "person_id"
+        ])
+      );
+      if (!body.dec_date)
+      throw new CustomError(
+        Enum.HTTP_CODES.BAD_REQUEST,
+        i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),
+        i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, [
+          "dec_date"
+        ])
+      );
+      if (!body.dec_number)
+      throw new CustomError(
+        Enum.HTTP_CODES.BAD_REQUEST,
+        i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),
+        i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, [
+          "dec_number"
+        ])
+      );
+      if (!body.entry_date)
+      throw new CustomError(
+        Enum.HTTP_CODES.BAD_REQUEST,
+        i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),
+        i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, [
+          "entry_date"
+        ])
+      );
 
     let member = new Members({
       association_id: body.association_id,

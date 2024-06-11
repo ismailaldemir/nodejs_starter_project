@@ -11,7 +11,7 @@ const schema = mongoose.Schema({
     dec_number: { type: String, required: true},//decission number karar numarası
     member_number: { type: String, required: true},//üye numarası
     entry_date: { type: Date, required: true},//üyelik başlangıç tarihi
-    term_date: { type: Date, required: true},//termination date üyelik sonlandırma tarihi
+    term_date: { type: Date},//termination date üyelik sonlandırma tarihi
     is_active: { type: Boolean, default: true },
     created_by: { type: mongoose.SchemaTypes.ObjectId }
 }, {
